@@ -2,8 +2,8 @@
 
 # 默认参数
 CONFIG_PATH="my_config.yaml"
-IMAGE_PATH="/home/yjguo/SAN-main/data/CROHME/16_test_images"
-LABEL_PATH="/home/yjguo/SAN-main/data/CROHME/16_test_labels.txt"
+IMAGE_PATH="SAN-main/data/CROHME/16_test_images"
+LABEL_PATH="SAN-main/data/CROHME/16_test_labels.txt"
 
 
 
