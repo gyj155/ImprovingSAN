@@ -1,0 +1,6 @@
+*.zip
+SAN-main/data
+
+
+__pycache__/
+**/__pycache__/
