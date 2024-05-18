@@ -1,5 +1,10 @@
 *.zip
-SAN-main/data
+*.pkl
+*.txt
+*.tar
+
+SAN-main/data/14_test_images
+SAN-main/data/CROHME
 
 logs/
 
