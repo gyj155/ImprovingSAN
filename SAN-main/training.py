@@ -1,13 +1,24 @@
 import torch
 from tqdm import tqdm
-
+import os
 from utils import updata_lr, Meter, cal_score
+from datetime import datetime
+def save_checkpoint(model, optimizer, epoch, loss, checkpoint_dir='/home/yjguo/san/train_ckpts'):
+    os.makedirs(checkpoint_dir, exist_ok=True)
+    checkpoint_path = os.path.join(checkpoint_dir, str(datetime.now().strftime('%Y-%m-%d'))+'_'+str(datetime.now().strftime('%H:%M:%S'))+'.pth')
+    torch.save({
+        'epoch': epoch,
+        'model_state_dict': model.state_dict(),
+        'optimizer_state_dict': optimizer.state_dict(),
+        'loss': loss,
+    }, checkpoint_path)
+    print(f'Checkpoint saved at {checkpoint_path}')
 
-
-def train(params, model, optimizer, epoch, train_loader, writer=None):
+def train(params, model, optimizer, epoch, train_loader, writer=0):
 
     model.train()
     device = params['device']
+    print(device)
     loss_meter = Meter()
 
     word_right, struct_right, exp_right, length, cal_num = 0, 0, 0, 0, 0
@@ -56,20 +67,24 @@ def train(params, model, optimizer, epoch, train_loader, writer=None):
                 writer.add_scalar('train/ExpRate', ExpRate, current_step)
                 writer.add_scalar('train/lr', optimizer.param_groups[0]['lr'], current_step)
 
-            pbar.set_description(f'Epoch: {epoch+1} train loss: {loss.item():.4f} word loss: {word_loss:.4f} '
-                                 f'struct loss: {struct_loss:.4f} parent loss: {parent_loss:.4f} '
-                                 f'kl loss: {kl_loss:.4f} WordRate: {word_right / length:.4f} '
-                                 f'structRate: {struct_right / length:.4f} ExpRate: {exp_right / cal_num:.4f}')
+            if 0:
+                pbar.set_description(f'Epoch: {epoch+1} train loss: {loss.item():.4f} word loss: {word_loss:.4f} '
+                                    f'struct loss: {struct_loss:.4f} parent loss: {parent_loss:.4f} '
+                                    f'kl loss: {kl_loss:.4f} WordRate: {word_right / length:.4f} '
+                                    f'structRate: {struct_right / length:.4f} ExpRate: {exp_right / cal_num:.4f}')
 
         if writer:
             writer.add_scalar('epoch/train_loss', loss_meter.mean, epoch+1)
             writer.add_scalar('epoch/train_WordRate', word_right / length, epoch+1)
             writer.add_scalar('epoch/train_structRate', struct_right / length, epoch + 1)
             writer.add_scalar('epoch/train_ExpRate', exp_right / cal_num, epoch + 1)
+        
+        
+        save_checkpoint(model, optimizer, epoch, loss_meter.mean)
         return loss_meter.mean, word_right / length, struct_right / length, exp_right / cal_num
 
 
-def eval(params, model, epoch, eval_loader, writer=None):
+def eval(params, model, epoch, eval_loader, writer=0):
 
     model.eval()
     device = params['device']
