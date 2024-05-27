@@ -1,0 +1,53 @@
+[
+    {
+        "idx": 1,
+        "date": "2024-05-15",
+        "time": "07:22:48",
+        "config_path": "my_config.yaml",
+        "image_path": "data/14_test_images",
+        "label_path": "data/test_caption.txt",
+        "terminal_output": "115 symbols in total\nNo optimizer in the pretrained model\n0.565922920892495\n"
+    },
+    {
+        "idx": 2,
+        "date": "2024-05-15",
+        "time": "07:57:29",
+        "config_path": "my_config.yaml",
+        "image_path": "/home/yjguo/SAN-main/data/CROHME/19_test_images",
+        "label_path": "/home/yjguo/SAN-main/data/CROHME/19_test_labels.txt",
+        "terminal_output": "115 symbols in total\nNo optimizer in the pretrained model\n0.5579649708090075\n"
+    },
+    {
+        "idx": 3,
+        "date": "2024-05-15",
+        "time": "08:00:40",
+        "config_path": "my_config.yaml",
+        "image_path": "/home/yjguo/SAN-main/data/CROHME/16_test_images",
+        "label_path": "/home/yjguo/SAN-main/data/CROHME/16_test_labels.txt",
+        "terminal_output": "115 symbols in total\nNo optimizer in the pretrained model\n0.5353095030514385\n"
+    },
+    {
+        "idx": 4,
+        "date": "2024-05-25",
+        "time": "11:48:01",
+        "config_path": "config.yaml",
+        "image_path": "data/CROHME/16_test_images",
+        "label_path": "data/CROHME/16_test_labels.txt"
+    },
+    {
+        "idx": 5,
+        "date": "2024-05-25",
+        "time": "15:36:41",
+        "config_path": "config.yaml",
+        "image_path": "data/CROHME/16_test_images",
+        "label_path": "data/CROHME/16_test_labels.txt"
+    },
+    {
+        "idx": 6,
+        "date": "2024-05-25",
+        "time": "18:49:19",
+        "config_path": "config.yaml",
+        "image_path": "data/CROHME/16_test_images",
+        "label_path": "data/CROHME/16_test_labels.txt"
+    }
+]
