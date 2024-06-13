@@ -20,7 +20,7 @@ class Attention(nn.Module):
         self.alpha_convert = nn.Linear(self.attention_dim, 1)
 
     def forward(self, cnn_features, hidden, alpha_sum, image_mask=None):
-
+        
         query = self.hidden_weight(hidden) #256->512
         
         alpha_sum_trans = self.attention_conv(alpha_sum)#
@@ -39,5 +39,6 @@ class Attention(nn.Module):
         alpha_sum = alpha[:,None,:,:] + alpha_sum
 
         context_vector = (alpha[:,None,:,:] * cnn_features).sum(-1).sum(-1)
-
+        
         return context_vector, alpha, alpha_sum
+        

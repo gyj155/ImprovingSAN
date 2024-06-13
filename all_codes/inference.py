@@ -4,49 +4,38 @@ import argparse
 import torch
 import json
 from tqdm import tqdm
-from datetime import datetime
-from io import StringIO
 import sys
-
 from utils import load_config, load_checkpoint
 from infer.Backbone import Backbone
 from dataset import Words
+import numpy as np
 
 parser = argparse.ArgumentParser(description='Spatial channel attention')
-parser.add_argument('--config', default='config.yaml', type=str, help='配置文件路径')
-parser.add_argument('--image_path', default='/home/yuanye/work/data/CROHME2014/14_off_image_test', type=str, help='测试image路径')
-parser.add_argument('--label_path', default='/home/yuanye/work/data/CROHME2014/test_caption.txt', type=str, help='测试label路径')
+parser.add_argument('--config', default='all_codes/config.yaml', type=str)
 args = parser.parse_args()
-
+image_paths = ["data/CROHME/14_test_images","data/CROHME/16_test_images","data/CROHME/19_test_images"]
+label_paths = ["data/CROHME/14_test_labels.txt","data/CROHME/16_test_labels.txt","data/CROHME/19_test_labels.txt"]
 if not args.config:
-    print('请提供config yaml路径！')
+    print('config file is needed')
     exit(-1)
 
-# 重定向标准输出流
-# old_stdout = sys.stdout
-# sys.stdout = mystdout = StringIO()
-
-# 加载config文件
 params = load_config(args.config)
-
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 params['device'] = device
-
-words = Words(params['word_path']) #words.words_dict = {words[i].strip(): i for i in range(len(words))}
+words = Words(params['word_path'])
 params['word_num'] = len(words)
 params['struct_num'] = 7
 params['words'] = words
 
 model = Backbone(params)
 model = model.to(device)
+optimizer = getattr(torch.optim, params['optimizer'])(model.parameters(), lr=float(params['lr']),
+                                                      eps=float(params['eps']), weight_decay=float(params['weight_decay']))
+
 #load_checkpoint(model, None, params['checkpoint'])
-load_checkpoint(model, None, '/home/yjguo/san/train_ckpts/SAN_2024-05-27-03-53_Encoder-DenseNet_Decoder-SAN_decoder_max_size-320-1600/SAN_2024-05-27-03-53_Encoder-DenseNet_Decoder-SAN_decoder_max_size-320-1600_WordRate-0.8349_structRate-0.9756_ExpRate-0.5000_2.pth')
+load_checkpoint(model, optimizer, '/Users/yejieguo/Desktop/san/train_ckpts/SAN_2024-05-27-08-51_Encoder-DenseNet_Decoder-SAN_decoder-ExpRate-0.4888_best.pth')
+
 model.eval()
-
-word_right, node_right, exp_right, length, cal_num = 0, 0, 0, 0, 0
-
-with open(args.label_path) as f:
-    labels = f.readlines()
 
 def convert(nodeid, gtd_list):
     isparent = False
@@ -91,100 +80,45 @@ def convert(nodeid, gtd_list):
                     return_string += convert(child_list[i][1], gtd_list)
         return return_string
 
-with torch.no_grad():
-    bad_case = {}
-    good_case = {}
-    for item in tqdm(labels):
-        name, *label = item.split()
-        label = ' '.join(label)
-        if name.endswith('.jpg') or name.endswith('.png') or name.endswith('.bmp'):
-            name = os.path.splitext(name)[0]  # 获取没有扩展名的文件名
+for img_path, label_path in zip(image_paths, label_paths):
+    word_right, node_right, exp_right, length, cal_num = 0, 0, 0, 0, 0
+    with open(label_path) as f:
+        labels = f.readlines()
 
-        # 尝试读取 PNG 图像
-        img = cv2.imread(os.path.join(args.image_path, name + '.png'))
-        if img is None:
-            # 如果没有 PNG 图像，则尝试读取 BMP 图像
-            img = cv2.imread(os.path.join(args.image_path, name + '_0.bmp'))
-        
-        if img is None:
-            print(f"图像 {name} 读取失败")
-            continue
-        
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-     
-        
-        image = torch.Tensor(img) / 255
-        
-        image = image.unsqueeze(0).unsqueeze(0)
-        print("image = ", image.shape)
-        image_mask = torch.ones(image.shape)
-        image, image_mask = image.to(device), image_mask.to(device)
 
-        prediction = model(image, image_mask)
-        #print("prediction = ", prediction)
-        
-        
-        latex_list = convert(1, prediction)
-        latex_string = ' '.join(latex_list)
-        print("latex_string = ", latex_string.strip())
-        if latex_string == label.strip():
-            exp_right += 1
-            good_case = {
-                'name': name,
-                'label': label,
-                'predi': latex_string,
-                'list': prediction
-            }
-            with open('test_good_case.jsonl', 'a') as f:
-                json.dump(good_case, f, ensure_ascii=False)
-                f.write('\n')
-        else:
-            bad_case = {
-                'name': name,
-                'label': label,
-                'predi': latex_string,
-                'list': prediction
-            }
-            with open('test_bad_case.jsonl', 'a') as f:
-                json.dump(bad_case, f, ensure_ascii=False)
-                f.write('\n')
-        
+    with torch.no_grad():      
+        for item in tqdm(labels):
+            name, *label = item.split()
+            label = ' '.join(label)
+            img = cv2.imread(os.path.join(img_path, name + '.png'))
+            if img is None:
+                img = cv2.imread(os.path.join(img_path, name + '_0.bmp')) 
+            if img is None:
+                print(f"Reading {name} failed")
+                continue
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            image = torch.Tensor(img) / 255
+            image = image.unsqueeze(0).unsqueeze(0)
+            image_mask = torch.ones(image.shape)
+            image, image_mask = image.to(device), image_mask.to(device)
+            print('image:',image.shape)
+            prediction = model(image, image_mask)
+            print('prediction:',prediction)
+            latex_list = convert(1, prediction)
+            latex_string = ' '.join(latex_list)
+            print('final_string:',latex_string)
+            if latex_string == label.strip():
+                exp_right += 1         
+            else:
+                bad_case = {
+                    'name': name,
+                    'label': label,
+                    'predi': latex_string,
+                    'list': prediction
+                }
+                with open('all_codes/test_bad_case.jsonl', 'a') as f:
+                    json.dump(bad_case, f, ensure_ascii=False)
+                    f.write('\n')
+            sys.exit()
 
-        
-            
-            
-            #sys.exit()
-
-    print(exp_right / len(labels))
-
-        
-
-# 获取终端输出内容
-# sys.stdout = old_stdout
-# terminal_output = mystdout.getvalue()
-
-# 创建或更新历史记录文件
-history_file = 'history.json'
-history_data = []
-
-if os.path.exists(history_file):
-    try:
-        with open(history_file, 'r') as f:
-            history_data = json.load(f)
-    except json.JSONDecodeError:
-        history_data = []
-
-current_run = {
-    'idx': len(history_data) + 1,
-    'date': datetime.now().strftime('%Y-%m-%d'),
-    'time': datetime.now().strftime('%H:%M:%S'),
-    'config_path': args.config,
-    'image_path': args.image_path,
-    'label_path': args.label_path,
-    #'terminal_output': terminal_output
-}
-
-history_data.append(current_run)
-
-with open(history_file, 'w') as f:
-    json.dump(history_data, f, ensure_ascii=False, indent=4)
+        print(f'Test name: {img_path.split("/")[-1]}\nacc:{exp_right / len(labels)}')

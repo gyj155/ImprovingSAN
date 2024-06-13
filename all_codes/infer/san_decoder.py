@@ -57,9 +57,16 @@ class SAN_decoder(nn.Module):
         self.c2p_relation_weight = nn.Linear(self.hidden_size, self.hidden_size // 2)
         self.c2p_context_weight = nn.Linear(self.out_channel, self.hidden_size // 2)
         self.c2p_convert = nn.Linear(self.hidden_size // 2, self.word_num)
-        
+        ############################################################################################################
+        self.hidden_state = nn.Linear(self.hidden_size, self.hidden_size // 2)
+        self.c2p_hidden_state = nn.Linear(self.hidden_size, self.hidden_size // 2)
+        self.final_fusion = nn.Linear(self.hidden_size // 2 * 4, self.hidden_size // 2)
+        self.c2pfinal_fusion = nn.Linear(self.hidden_size // 2 * 5, self.hidden_size // 2)
+        ############################################################################################################
         if params['dropout']:
             self.dropout = nn.Dropout(params['dropout_ratio'])
+            
+        
            
 
     def forward(self, cnn_features, images_mask):
@@ -80,7 +87,7 @@ class SAN_decoder(nn.Module):
             word_embedding = self.embedding(torch.ones(1).long().to(device=self.device))
             struct_list = []
             parent_hidden = self.init_hidden(cnn_features, images_mask)
-
+            
             prediction = ''
             right_brace = 0
             cid, pid = 0, 0
@@ -107,16 +114,18 @@ class SAN_decoder(nn.Module):
                 
                 word_context_weighted = self.word_context_weight(word_context_vec)#shape of word_context_weighted =  torch.Size([1, 128])
                
+                hidden_state = self.hidden_state(word_hidden_first)#shape of hidden_state =  torch.Size([1, 128])
+                
+                word_out_state = self.final_fusion(torch.cat((current_state, word_weighted_embedding, word_context_weighted, hidden_state), 1))#shape of word_out_state =  torch.Size([1, 128])
+                
                 if self.params['dropout']:
-                    word_out_state = self.dropout(current_state + word_weighted_embedding + word_context_weighted)#shape of word_out_state =  torch.Size([1, 128])
+                    word_out_state = self.dropout(word_out_state)#shape of word_out_state =  torch.Size([1, 128])
                     
-                else:
-                    word_out_state = current_state + word_weighted_embedding + word_context_weighted
                     
 
                 word_prob = self.word_convert(word_out_state)#shape of word_prob =  torch.Size([1, 115])
                 
-                p_word = word
+                p_word = word #上一次识别出的word
                 _, word = word_prob.max(1) #word是识别出的文字的索引
                 
                 print(self.params['words'].words_index_dict[word.item()])
@@ -132,7 +141,7 @@ class SAN_decoder(nn.Module):
                     struct_prob = self.struct_convert(word_out_state)#shape of struct_prob=torch.Size([1, 7]) 7种结构符的概率
                     
                     structs = torch.sigmoid(struct_prob)
-                    print("structs=",structs)
+                    #print("structs=",structs)
                     for num in range(structs.shape[1]-1, -1, -1): #7次 反过来遍历 这样首先pop的是左边的结构符
                         if structs[0][num] > self.threshold:
                     
@@ -171,7 +180,7 @@ class SAN_decoder(nn.Module):
                         if right_brace != 0:
                             for brach in range(right_brace):
                                 prediction = prediction + '} '
-                        print("broke here")
+                        #print("broke here")
                         break
                     word, parent_hidden, p_word, pid, word_alpha_sum = struct_list.pop()
                     word_embedding = self.embedding(torch.LongTensor([word]).to(device=self.device))
@@ -238,7 +247,7 @@ class SAN_decoder(nn.Module):
                 #sys.exit(1)
                 
                 
-        print("result=",result)
+        #print("result=",result)
         
         return result
 

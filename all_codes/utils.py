@@ -138,10 +138,8 @@ def cal_score(probs, labels, mask):
 
 def my_load_checkpoints(new_model, original_weights, init = True):#对于修改过的模型，加载原结构的权重
     new_state_dict = new_model.state_dict()
-    #new_state_dict = new_state_dict['encoder']
     matched_layers = 0
     initialized_layers = 0
-    #print(new_state_dict.keys())
     for name, param in original_weights['model'].items():
         if name in new_state_dict and new_state_dict[name].shape == param.shape:
             new_state_dict[name] = param

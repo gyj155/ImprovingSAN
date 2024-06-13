@@ -43,11 +43,6 @@ model.name = f'{params["experiment"]}_{now}_Encoder-{params["encoder"]["net"]}_D
 print(model.name)
 model = model.to(device)
 
-if args.check:
-    writer = None
-else:
-    writer = SummaryWriter(f'{params["log_dir"]}/{model.name}')
-
 optimizer = getattr(torch.optim, params['optimizer'])(model.parameters(), lr=float(params['lr']),
                                                       eps=float(params['eps']), weight_decay=float(params['weight_decay']))
 
@@ -70,39 +65,11 @@ for epoch in range(params['epoches']):
     print('training')
     train_loss, train_word_score, train_node_score, train_expRate = train(params, model, optimizer, epoch, train_loader, writer=0)
     print(f'Epoch: {epoch+1}  loss: {train_loss:.4f}  word score: {train_word_score:.4f}  struct score: {train_node_score:.4f} ')
-    loss, word_right, struct_right, exp_right = eval(params, model, epoch, eval_loader, writer=writer)
+    loss, word_right, struct_right, exp_right = eval(params, model, epoch, eval_loader, writer=0)
     print(f'Epoch: {epoch+1}  loss: {loss:.4f}  word score: {word_right:.4f}  struct score: {struct_right:.4f}  ExpRate: {exp_right:.4f}')
     if (epoch+1)%1 == 0 :
         save_checkpoint(model, optimizer, word_right, struct_right, exp_right, epoch+1, optimizer_save=params['optimizer_save'], path='train_ckpts')
-    # if epoch > 150:
-    #     eval_loss, eval_word_score, eval_node_score, eval_expRate = eval(params, model, epoch, eval_loader, writer=writer)
-
-    #     print(f'Epoch: {epoch+1}  loss: {eval_loss:.4f}  word score: {eval_word_score:.4f}  struct score: {eval_node_score:.4f} '
-    #           f'ExpRate: {eval_expRate:.4f}')
-
-    #     if eval_expRate > min_score and not args.check:
-    #         min_score = eval_expRate
-    #         save_checkpoint(model, optimizer, eval_word_score, eval_node_score, eval_expRate, epoch+1,
-    #                         optimizer_save=params['optimizer_save'], path=params['checkpoint_dir'])
-    #         min_step = 0
-
-    #     elif min_score != 0 and 'lr_decay' in params and params['lr_decay'] == 'step':
-
-    #         min_step += 1
-
-    #         if min_step > params['step_ratio']:
-    #             new_lr = optimizer.param_groups[0]['lr'] / params['step_decay']
-
-    #             if new_lr < params['lr'] / 1000:
-    #                 print('lr is too small')
-    #                 exit(-1)
-
-    #             for param_group in optimizer.param_groups:
-    #                 param_group['lr'] = new_lr
-
-    #             min_step = 0
-
-
+   
 
 
 

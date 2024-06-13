@@ -5,7 +5,7 @@ experiment: "SAN"
 seed: 20200814
 
 # 训练参数
-epoches: 2
+epoches: 8
 batch_size: 16
 workers: 0
 optimizer: Adadelta
@@ -27,10 +27,8 @@ gradient_clip: True
 use_label_mask: False
 
 # 训练数据
-# train_image_path: 'data/train/train_image.pkl'
-# train_label_path: 'data/train/train_label.pkl'
-train_image_path: 'data/train/16_image.pkl'
-train_label_path: 'data/train/16_label.pkl'
+train_image_path: 'data/train/train_image.pkl'
+train_label_path: 'data/train/train_label.pkl'
 eval_image_path: 'data/train/14_image.pkl'
 eval_label_path: 'data/train/14_label.pkl'
 
@@ -71,7 +69,7 @@ hybrid_tree:
 optimizer_save: False
 checkpoint_dir: 'train_ckpts'
 finetune: True
-checkpoint: "/home/yjguo/san/train_ckpts/SAN_2024-05-27-03-36_Encoder-DenseNet_Decoder-SAN_decoder_max_size-320-1600/SAN_2024-05-27-03-36_Encoder-DenseNet_Decoder-SAN_decoder_max_size-320-1600_WordRate-0.8128_structRate-0.9789_ExpRate-0.4364_2.pth"
+checkpoint: "/Users/yejieguo/Desktop/san/train_ckpts/SAN_2024-05-27-08-51_Encoder-DenseNet_Decoder-SAN_decoder-ExpRate-0.4888_best.pth"
 #checkpoint: "/home/yjguo/san/checkpoints/SAN_decoder/best.pth"
 # tensorboard路径
 log_dir: 'logs'

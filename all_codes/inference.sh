@@ -2,8 +2,8 @@
 
 # 默认参数
 CONFIG_PATH="all_codes/config.yaml"
-IMAGE_PATH="data/CROHME/14_test_images"
-LABEL_PATH="data/CROHME/14_test_labels.txt"
+IMAGE_PATH="data/CROHME/19_test_images"
+LABEL_PATH="data/CROHME/19_test_labels.txt"
 
 
 
